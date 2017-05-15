@@ -59,7 +59,7 @@ client.write('http')
 ```
 
 
-Query influxdb with multi where condition
+Query influxdb with multi where conditions
 
 ```js
 const Influx = require('influxdb-nodejs');
@@ -73,7 +73,7 @@ client.query('http')
 // => influx ql: select * from "http" where "spdy" = '1' and "use" >= 300 and ("method" = 'GET' or "method" = 'POST')
 ```
 
-Query influxdb using functon
+Query influxdb using functions
 
 ```js
 const Influx = require('influxdb-nodejs');
@@ -93,7 +93,7 @@ client.query('http')
 // select bottom("use",5) from "http" where "spdy" = '1'
 ```
 
-Write points to influxdb in queue
+Write, points to influxdb in queue
 
 ```js
 const Influx = require('influxdb-nodejs');
@@ -120,7 +120,7 @@ setInterval(() => {
 }, 5000);
 ```
 
-Sub query
+Sub queries
 
 ```js
 const Influx = require('influxdb-nodejs');
