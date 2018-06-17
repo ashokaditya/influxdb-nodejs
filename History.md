@@ -1,3 +1,18 @@
+# 2.7.6
+  * Fix conversion of multiple spaces in field/tag (jakubknejzlik)
+
+# 2.7.5
+  * When queue is empty, `syncWrite` and `syncQuery` return `Promise.resolve()`
+
+# 2.7.4
+  * Support update function
+
+# 2.7.3
+  * Support abbreviation for fields type
+
+# 2.7.2
+  * Add `invalid-fields` and `invalid-tags` event
+
 # 2.7.0
   * Add `sync` event and change `queue` event's data
   * Judge whether `Buffer.from` is equal to `Uint8Array.from` to avoid throw TypeError, #17

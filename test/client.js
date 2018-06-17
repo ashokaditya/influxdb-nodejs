@@ -4,9 +4,20 @@ const _ = require('lodash');
 const Client = require('..');
 const db = 'vicanso';
 
+function convertType(type) {
+  const dict = {
+    i: 'integer',
+    b: 'boolean',
+    f: 'float',
+    s: 'string',
+  };
+  return dict[type] || type;
+}
+
 describe('Client', () => {
   const client = new Client(`http://localhost:8086,localhost:8076/${db}`);
   client.startHealthCheck();
+
   it('init', done => {
     setTimeout(done, 1500);
   });
@@ -58,7 +69,7 @@ describe('Client', () => {
     client.write('http')
       .tag({
         spdy: 'fast',
-        type: '3'
+        type: '3',
       })
       .field({
         use: 200,
@@ -109,14 +120,34 @@ describe('Client', () => {
     }).catch(done);
   });
 
-  it('write point with schema(stripUnknown)', done => {
+  it('write point with schema(stripUnknown)', (done) => {
     const fieldSchema = {
-      use: 'integer',
-      sucesss: 'boolean',
+      use: 'i',
+      sucesss: 'b',
       vip: 'boolean',
+      no: 'integer',
+      score: 'f',
     };
     client.schema('request', fieldSchema, {
+      type: ['vip'],
+    }, {
       stripUnknown: true,
+    });
+    client.once('invalid-fields', (data) => {
+      const fail = data.fail;
+      assert.equal(data.measurement, 'request');
+      assert.equal(fail.length, 4);
+      assert.equal(fail[0].category, 'stripUnknown');
+      assert.equal(fail[0].key, 'version');
+      assert.equal(fail[0].value, 1);
+    });
+    client.once('invalid-tags', (data) => {
+      const fail = data.fail;
+      assert.equal(data.measurement, 'request');
+      assert.equal(fail.length, 1);
+      assert.equal(fail[0].category, 'invalid');
+      assert.equal(fail[0].key, 'type');
+      assert.equal(fail[0].value, 'a');
     });
     client.write('request')
       .field({
@@ -125,12 +156,20 @@ describe('Client', () => {
         vip: 'true',
         count: null,
         name: undefined,
-      }).then(() => {
-        return client.showFieldKeys('request')
+        version: 1,
+        token: 'abcd',
+        no: 'abcd',
+        score: 'ab',
+      })
+      .tag({
+        type: 'a',
+      })
+      .then(() => {
+        return client.showFieldKeys('request');
       }).then((data) => {
         assert.equal(data[0].values.length, 3);
         _.forEach(data[0].values, (item) => {
-          assert.equal(item.type, fieldSchema[item.key]);
+          assert.equal(item.type, convertType(fieldSchema[item.key]));
         });
         done();
       }).catch(done);
@@ -376,7 +415,7 @@ describe('Client', () => {
 
   it('show databases', done => {
     client.showDatabases().then(dbs => {
-      assert(dbs.length);
+      assert(_.includes(dbs, db), true);
       done();
     }).catch(done);
   });
@@ -526,13 +565,6 @@ describe('Client:Auth', () => {
 
   it('create database', done => {
     client.createDatabase().then(() => {
-      setTimeout(done, 300);
-    }).catch(done);
-  });
-
-  it('show databases', done => {
-    client.showDatabases().then(dbs => {
-      assert.equal(dbs.length, 2);
       done();
     }).catch(done);
   });
@@ -552,6 +584,13 @@ describe('Client:Auth', () => {
       .then(data => {
         done();
       }).catch(done);
+  });
+
+  it('show databases', done => {
+    client.showDatabases().then(dbs => {
+      assert(_.includes(dbs, db), true);
+      done();
+    }).catch(done);
   });
 
   it('query point', done => {
